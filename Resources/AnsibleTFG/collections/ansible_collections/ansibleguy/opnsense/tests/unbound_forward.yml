@@ -1,0 +1,176 @@
+---
+
+# todo: test default matching
+
+- name: Testing Unbound DNS-Forwarding
+  hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ lookup('ansible.builtin.env', 'TEST_FIREWALL') }}"
+      api_credential_file: "{{ lookup('ansible.builtin.env', 'TEST_API_KEY') }}"
+      ssl_verify: false
+
+    ansibleguy.opnsense.unbound_forward:
+      timeout: 60
+
+    ansibleguy.opnsense.list:
+      target: 'unbound_forward'
+
+  tasks:
+    - name: Listing
+      ansibleguy.opnsense.list:
+      register: opn10
+      failed_when: >
+        'data' not in opn10 or
+        opn10.data | length != 0
+
+    - name: Removing - does not exist
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'fwd.opnsense.test.ansibleguy.net'
+        target: '1.1.1.1'
+        state: 'absent'
+        reload: false
+      register: opn1
+      failed_when: >
+        opn1.failed or
+        opn1.changed
+
+    - name: Adding 1
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'fwd.opnsense.test.ansibleguy.net'
+        target: '1.1.1.1'
+        reload: false # speed
+      register: opn4
+      failed_when: >
+        opn4.failed or
+        not opn4.changed
+
+    - name: Adding 2
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'fwd.opnsense.test.ansibleguy.net'
+        target: '1.1.1.2'
+        reload: false # speed
+      register: opn5
+      failed_when: >
+        opn5.failed or
+        not opn5.changed
+
+    - name: Adding 3 - catch-all
+      ansibleguy.opnsense.unbound_forward:
+        target: '1.1.1.3'
+        reload: false # speed
+      register: opn11
+      failed_when: >
+        opn11.failed or
+        not opn11.changed
+
+    - name: Disabling 2
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'fwd.opnsense.test.ansibleguy.net'
+        target: '1.1.1.2'
+        enabled: false
+        reload: false
+      register: opn6
+      failed_when: >
+        opn6.failed or
+        not opn6.changed
+      when: not ansible_check_mode
+
+    - name: Disabling 2 - nothing changed
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'fwd.opnsense.test.ansibleguy.net'
+        target: '1.1.1.2'
+        enabled: false
+        reload: false # speed
+      register: opn9
+      failed_when: >
+        opn9.failed or
+        opn9.changed
+      when: not ansible_check_mode
+
+    - name: Enabling 2
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'fwd.opnsense.test.ansibleguy.net'
+        target: '1.1.1.2'
+        reload: false # speed
+      register: opn7
+      failed_when: >
+        opn7.failed or
+        not opn7.changed
+      when: not ansible_check_mode
+
+    - name: Channging 2 - tcp-forward
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'fwd.opnsense.test.ansibleguy.net'
+        target: '1.1.1.2'
+        forward_tcp: true
+        reload: false # speed
+      register: opn12
+      failed_when: >
+        opn12.failed or
+        not opn12.changed
+      when: not ansible_check_mode
+
+    - name: Removing 2
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'fwd.opnsense.test.ansibleguy.net'
+        target: '1.1.1.2'
+        state: 'absent'
+        reload: false # speed
+      register: opn8
+      failed_when: >
+        opn8.failed or
+        not opn8.changed
+      when: not ansible_check_mode
+
+    - name: Listing
+      ansibleguy.opnsense.list:
+      register: opn3
+      failed_when: >
+        'data' not in opn3 or
+        opn3.data | length != 2
+      when: not ansible_check_mode
+
+    - name: Adding 4 - description
+      ansibleguy.opnsense.unbound_forward:
+        target: '1.1.1.4'
+        reload: false # speed
+        description: 'Deny access'
+      register: opn1
+      failed_when: >
+        opn1.failed or
+        not opn1.changed
+
+    - name: Adding - failing because of an invalid description was provided
+      ansibleguy.opnsense.unbound_forward:
+        target: '1.1.1.4'
+        reload: false # speed
+        description: >-
+          123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+          123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+          12345678901234567890123456789012345678901234567890123456
+      register: opn_fail2
+      failed_when: not opn_fail2.failed
+      when: not ansible_check_mode
+
+    - name: Cleanup
+      ansibleguy.opnsense.unbound_forward:
+        domain: "{{ item.d }}"
+        target: "{{ item.t }}"
+        state: 'absent'
+        reload: false
+      loop:
+        - {d: 'fwd.opnsense.test.ansibleguy.net', t: '1.1.1.1'}
+        - {d: 'fwd.opnsense.test.ansibleguy.net', t: '1.1.1.2'}
+        - {d: '', t: '1.1.1.3'}
+        - {d: '', t: '1.1.1.4'}
+      when: not ansible_check_mode
+
+    - name: Listing
+      ansibleguy.opnsense.list:
+      register: opn2
+      failed_when: >
+        'data' not in opn2 or
+        opn2.data | length != 0
+      when: not ansible_check_mode

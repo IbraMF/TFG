@@ -1,0 +1,17 @@
+- name: Backup config (when mode is backup)
+  cisco.ios.ios_config:
+    backup: yes
+  when: mode == 'backup'
+  register: backup_result
+
+- name: Save backup locally
+  fetch:
+   src: "{{ backup_result.backup_path }}"
+   dest: "{{ backup_file }}{{ inventory_hostname }}.cfg"
+   flat: yes
+  when: mode == 'backup'
+
+- name: Restore config from file (when mode is restore)
+  cisco.ios.ios_config:
+    src: "{{ backup_file }}{{ inventory_hostname }}.cfg"
+  when: mode == 'restore'

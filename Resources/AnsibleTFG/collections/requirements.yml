@@ -1,0 +1,10 @@
+#ansible-galaxy collection install -r collections/requirements.yml
+collections:
+  - name: cisco.ios
+    version: 8.0.0
+  - name: ansibleguy.opnsense
+  - name: ansible.utils
+    version: 4.1.0
+  - name: ansible.netcommon
+    version: 6.1.3
+

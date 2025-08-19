@@ -1,0 +1,11 @@
+---
+
+extends: default
+
+rules:
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+    ignore:
+      - .github/workflows/
+  line-length:
+    max: 190

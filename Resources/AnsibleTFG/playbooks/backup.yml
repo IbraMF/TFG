@@ -1,0 +1,24 @@
+- hosts: all
+  gather_facts: no
+
+  vars_prompt:
+    - name: mode
+      prompt: "Choose action for router/switches (backup|restore)"
+    - name: dev_type
+      prompt: "Choose to what apply the action (router|switch|all)"
+
+  tasks:
+    - name: OPNsense router Backup/Restore
+      include_role:
+        name: backup_router
+      when:
+        - inventory_hostname in groups['opnsense']
+        - dev_type in ['router', 'all']
+
+    - name: Cisco switch Backup/Restore
+      include_role:
+        name: backup_switch
+      when:
+        - inventory_hostname in (groups['l2switches'] + groups['l3switches'])
+        - dev_type in ['switch', 'all']
+

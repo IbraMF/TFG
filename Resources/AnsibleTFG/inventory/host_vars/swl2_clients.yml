@@ -1,0 +1,28 @@
+# Switch Variables
+ansible_host: 10.0.99.3
+
+# Interfaces
+unused_ports: "gi2/0-3,gi3/0-2"
+management_port: "gi3/3"
+
+# Vlans
+vlans:
+  - {id: 30, name: Clients}
+  - {id: 99, name: Management}
+
+# SVIs (y VRRP con vrrp_prio + vrrp_ip + vrrp_id)
+svis:
+  - {name: "vlan 99", address: "10.0.99.3", mask: "24"}
+
+## falta puertos hacia el router, portsecurity y (lacp????)....
+
+# Access ports
+access_ports:
+  - {interface: "g0/2",  mode: access, vlan: 30}
+  - {interface: "g3/3",  mode: access, vlan: 99}
+
+# Trunk ports (Añadir portchannel si necesario)
+trunk_ports:
+  - {interface: "gi0/0",  mode: trunk, native_vlan: 999, allowed_vlans: "30,99", encapsulation: "dot1q"}
+  - {interface: "gi0/1",  mode: trunk, native_vlan: 999, allowed_vlans: "30,99", encapsulation: "dot1q"}
+

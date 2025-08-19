@@ -1,0 +1,17 @@
+- name: Enable inter-Vlan routing
+  cisco.ios.ios_config:
+    lines:
+      - ip routing
+
+
+- name: Declare the ACLs
+  cisco.ios.ios_acls:
+    config:
+      - afi: "ipv4"
+        acls: "{{ acl_list.acls }}"
+  when: acl_list.acls is defined
+
+- name: Apply the ACL inbound on the destination SVI
+  cisco.ios.ios_acl_interfaces:
+    config: "{{ acl_list.dest_vlan }}"
+  when: acl_list.dest_vlan is defined

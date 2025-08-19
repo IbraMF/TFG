@@ -1,0 +1,30 @@
+---
+
+name: Documentation
+description: You have encountered missing, bad or incomplete documentation
+title: "Docs: "
+labels: ['documentation', 'triage']
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Make sure to search/read [the Docs](https://opnsense.ansibleguy.net/index.html) beforehand.
+
+  - type: textarea
+    id: doc-url
+    attributes:
+      label: Reference
+      description: |
+        Provide an URL to the documentation you are referencing:
+    validations:
+      required: false
+
+  - type: textarea
+    id: doc-problem
+    attributes:
+      label: Problem Found
+      description: |
+        Describe the documentation-issue you have encountered.
+    validations:
+      required: true

@@ -1,0 +1,40 @@
+- name: Add physical members to Port-channel
+  ios_lag_interfaces:
+    config: "{{ port_channels }}"
+  loop: "{{ port_channels }}"
+  when: port_channels is defined
+
+- name: Configure VRRP on each SVI
+  ios_config:
+    lines: |
+      interface {{ item.name }}
+      vrrp {{ item.vrrp_id }} ip {{ item.vrrp_ip }}
+      vrrp {{ item.vrrp_id }} priority {{ item.vrrp_prio }}
+      vrrp {{ item.vrrp_id }} preempt
+  loop: "{{ svis }}"
+  when: item.vrrp_prio is defined
+
+- name: Convert uplink to a routed port (no switchport + description)
+  cisco.ios.ios_interfaces:
+    config:
+      - name: "{{ uplink.interface }}"
+        mode: layer3
+    state: merged
+  when: uplink is defined
+
+- name: Configure P2P uplink L3 to core router
+  cisco.ios.ios_l3_interfaces:
+    config:
+      - name: "{{ uplink.interface }}"
+        ipv4:
+          - address: "{{ uplink.ip }}/{{ uplink.mask }}"
+  when: uplink is defined
+
+- name: Spin up OSPFv2 process
+  cisco.ios.ios_ospfv2:
+    config:
+      processes:
+        - process_id: "{{ item.id }}"
+          network: "{{ item.networks }}"
+  loop: "{{ ospf }}"
+  when: ospf is defined

@@ -1,0 +1,112 @@
+# Switch Variables
+ansible_host: 10.99.0.1
+
+# Interfaces
+unused_ports: "gi1/2-3,gi2/0-3,gi3/0-2"
+management_port: "gi3/3"
+
+# Vlans
+vlans:
+  - { id: 10, name: Servers }
+  - { id: 20, name: Corporate }
+  - { id: 30, name: Clients }
+  - { id: 99, name: Management }
+
+# SVIs (y VRRP con vrrp_prio + vrrp_ip + vrrp_id)
+svis:
+  - { name: "vlan 99", address: "10.99.0.1", mask: "24" }
+  - {
+      name: "vlan 10",
+      address: "10.0.10.101",
+      mask: "24",
+      vrrp_prio: "100",
+      vrrp_ip: "10.0.10.100",
+      vrrp_id: "10",
+    }
+  - {
+      name: "vlan 20",
+      address: "10.0.20.101",
+      mask: "24",
+      vrrp_prio: "100",
+      vrrp_ip: "10.0.20.100",
+      vrrp_id: "20",
+    }
+  - {
+      name: "vlan 30",
+      address: "10.0.30.101",
+      mask: "24",
+      vrrp_prio: "100",
+      vrrp_ip: "10.0.30.100",
+      vrrp_id: "30",
+    }
+
+# ACLs
+acl_list:
+  acls:
+    - name: "test"
+      acl_type: extended
+      aces:
+        - {
+            sequence: 10,
+            grant: deny,
+            protocol: ip,
+            source: { address: "0.0.0.0", wildcard_bits: "0.0.0.0" },
+            destination: { address: "0.0.0.0", wildcard_bits: "0.0.0.0" },
+          }
+        - {
+            sequence: 20,
+            grant: permit,
+            protocol: ip,
+            source: { any: true },
+            destination: { any: true },
+          }
+  dest_vlan:
+    - name: "vlan 10"
+      access_groups:
+        [{ acls: [{ name: "test", direction: "in" }], afi: "ipv4" }]
+
+# Access ports
+access_ports:
+  - { interface: "g0/2", mode: access, vlan: 10 }
+  - { interface: "g3/3", mode: access, vlan: 99 }
+
+# Trunk ports (Añadir portchannel si necesario)
+trunk_ports:
+  - {
+      interface: "gi0/0",
+      mode: trunk,
+      native_vlan: 999,
+      allowed_vlans: "10,20,99",
+      encapsulation: "dot1q",
+    }
+  - {
+      interface: "gi0/1",
+      mode: trunk,
+      native_vlan: 999,
+      allowed_vlans: "10,20,99",
+      encapsulation: "dot1q",
+    }
+  - {
+      interface: "{{ port_channels[0].name }}",
+      mode: trunk,
+      native_vlan: 999,
+      allowed_vlans: "10,20,90",
+      encapsulation: "dot1q",
+    }
+
+# PortChannel
+port_channels:
+  - name: "Port-channel 1"
+    members:
+      [{ member: "g1/0", mode: "active" }, { member: "g1/1", mode: "active" }]
+
+# Router link
+uplink: { interface: "g0/1", ip: "192.168.1.1", mask: "30" }
+
+# OSPF (añade a networks las redes a  las que compartir con ospf)
+ospf:
+  - id: "1"
+    networks:
+      - { address: "10.0.10.0", wildcard_bits: "0.0.0.255", area: "1" }
+      - { address: "10.0.20.0", wildcard_bits: "0.0.0.255", area: "1" }
+      - { address: "10.0.30.0", wildcard_bits: "0.0.0.255", area: "1" }

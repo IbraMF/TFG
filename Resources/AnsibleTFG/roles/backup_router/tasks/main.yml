@@ -1,0 +1,35 @@
+- name: Find current old backup
+  find:
+    paths: "{{ backup_folder }}"
+    patterns: "config*"
+  register: old_backup
+
+- name: Delete old backups
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ old_backup.files }}"
+  when: old_backup.matched > 0 and mode == "backup"
+
+- name: Download current config.xml
+  ansible.builtin.uri:
+    url: "https://{{ ansible_host }}/api/core/backup/download/this"
+    method: GET
+    force_basic_auth: yes
+    url_username: "{{ api_key }}"
+    url_password: "{{ api_secret }}"
+    dest: "{{ backup_folder }}"
+    validate_certs: no
+    status_code: 200
+  when: mode == "backup"
+
+- name: Restore previously saved config
+  ansible.builtin.uri:
+    url: "https://{{ ansible_host }}/api/core/backup/revert_backup/config-{{ old_backup.files[0].path.split('-')[2] }}"
+    method: GET
+    force_basic_auth: yes
+    url_username: "{{ api_key }}"
+    url_password: "{{ api_secret }}"
+    validate_certs: no
+    status_code: 200
+  when: mode == "restore"

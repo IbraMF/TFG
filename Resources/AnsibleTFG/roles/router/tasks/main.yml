@@ -1,0 +1,18 @@
+- name: Create bridge0 and add OPT2+OPT3  ❰legacy API call❱
+  ansibleguy.opnsense.raw:
+    firewall: "{{ ansible_host }}"        # <-- REQUIRED
+    api_key:    "{{ api_key }}"      # or use api_credential_file:
+    api_secret: "{{ api_secret }}"   #   /path/to/downloaded.key
+    ssl_verify: false                          # only for a self-signed cert
+    url:   "interfaces/bridge/addBridge"       # legacy PHP endpoint
+    action: post
+    data:
+      members: [opt2, opt3]
+      descr:   "LAN_BR"
+
+- name: Assign bridge0 as LAN
+  ansibleguy.opnsense.raw:
+    method: POST
+    path: '/interfaces/assign/lan'         # also legacy
+    payload:
+      if: '{{ br_rsp.data.if }}'           # e.g. "bridge0"

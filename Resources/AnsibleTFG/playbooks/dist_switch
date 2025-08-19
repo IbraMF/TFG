@@ -1,0 +1,5 @@
+- name: Distibution Switch Configuration
+  hosts: l3switches
+  gather_facts: no
+  roles:
+    - dist_switch

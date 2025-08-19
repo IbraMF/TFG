@@ -1,0 +1,6 @@
+# pip requirements
+yamllint
+pylint
+ansible-core
+ansible-lint==25.1.5
+httpx

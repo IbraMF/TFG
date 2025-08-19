@@ -1,0 +1,39 @@
+- name: Ensure the WireGuard plugin (os-wireguard) is installed
+  ansibleguy.opnsense.package:
+    firewall: "{{ ansible_host }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    name: os-wireguard
+    action: install
+
+- name: Configure WireGuard server instance wg0
+  ansibleguy.opnsense.wireguard_server:
+    firewall: "{{ ansible_host }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    name: wg0
+    port: 51820
+    allowed_ips:
+      - "10.10.10.1/24"
+    public_key: "{{ server_pubkey }}"
+    private_key: "{{ wg_private_key }}"
+    enabled: true
+
+- name: Add WireGuard peer for IT department
+  ansibleguy.opnsense.wireguard_peer:
+    firewall: "{{ ansible_host }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    name: it-peer
+    servers:
+      - wg0
+    endpoint: "{{ server_endpoint }}"
+    port: 51820
+    public_key: "{{ server_pubkey }}"
+    allowed_ips:
+      - "10.10.10.2/32"
+    enabled: true
+

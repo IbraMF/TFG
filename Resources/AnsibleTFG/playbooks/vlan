@@ -1,0 +1,5 @@
+- name: Coniguring Vlans and SVIs
+  hosts: l2switches:l3switches
+  gather_facts: no
+  roles:
+    - vlan

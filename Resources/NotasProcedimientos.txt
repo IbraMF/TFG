@@ -1,0 +1,49 @@
+montar carpeta compartida
+	/usr/bin/vmhgfs-fuse .host:AnsibleTFG /root/ansible -o subtype=vmhgfs-fuse,allow_other
+crontab para sincronizar carpeta compartida
+	*/10 * * * * /usr/bin/rsync -avz --delete debian@192.168.122.138:/home/debian/ansible_local/ /root/ansible > /root/crontab.log
+en las imagenes ios añadir las opciones -machine pc-q35-4.2 a la plantilla 
+habilitar en preferencias server permitir conexiones locales
+para conectarse a telnet usamos ip de la vm y el puerto que sea
+	
+añadir tanto ip como ruta a debian
+ssh-keygen en debian si no hay llaves rsa
+pegar en debian al final de /etc/ssh/ssh_config para que ssh no de error no matching key found
+
+	HostkeyAlgorithms ssh-dss,ssh-rsa
+
+	KexAlgorithms +diffie-hellman-group1-sha1,diffie-hellman-group14-sha1
+
+fix debian 12 terminal mete en .bashrc lo siguiente y haz . .bashrc
+	export TERM=xterm-256color
+	resize > /dev/null 2>&1
+
+servidor debian
+	aumentar tamaño hdd 3 GB
+	editar interfaces y resetear networknig
+	sudo apt update && sudo apt upgrade
+	seguir https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/ for grafana
+	sudo systemctl daemon-reload
+	sudo systemctl start grafana-server
+	sudo systemctl enable grafana-server
+	seguir https://docs.influxdata.com/influxdb/v2/install/?t=Linux o mejor https://medium.com/yavar/install-and-setup-influxdb-on-ubuntu-20-04-22-04-3d6e090ec70c
+	sudo systemctl start influxdb
+	sudo systemctl enable influxdb
+	sudo apt install python3.11-venv, pip
+	sudo python -m venv /opt/venv (instalar dependencias)
+	
+
+añadir a servidor vpn:
+	sudo apt install mosquitto -y
+	añadir a /etc/mosquitto/mosquitto.conf	
+		listener 1883
+		allow_anonymous false
+		password_file /etc/mosquitto/passwd
+		log_type error
+		log_type warning
+	mosquitto_passwd -c passwd admin  (contraseña: mosquitto)
+
+
+Para que mosquitto funcione en el servido oracle al usar ansible
+	sudo iptables -I INPUT 5 -p tcp --dport 1883 -j ACCEPT
+	sudo iptables -D INPUT 7

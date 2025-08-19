@@ -1,0 +1,36 @@
+{
+ "collection_info": {
+  "namespace": "ansibleguy",
+  "name": "opnsense",
+  "version": "1.2.13",
+  "authors": [
+   "AnsibleGuy <guy@ansibleguy.net>"
+  ],
+  "readme": "README.md",
+  "tags": [
+   "firewall",
+   "api",
+   "opnsense",
+   "iac",
+   "network",
+   "security",
+   "filter"
+  ],
+  "description": "Ansible Collection to manage OPNSense firewalls using their API",
+  "license": [],
+  "license_file": "LICENSE.txt",
+  "dependencies": {},
+  "repository": "https://github.com/ansibleguy/collection_opnsense",
+  "documentation": "https://opnsense.ansibleguy.net",
+  "homepage": "https://www.O-X-L.com",
+  "issues": "https://github.com/ansibleguy/collection_opnsense/issues"
+ },
+ "file_manifest_file": {
+  "name": "FILES.json",
+  "ftype": "file",
+  "chksum_type": "sha256",
+  "chksum_sha256": "cc885a3d471b2482d5d3adb60e01f67dd90a9f209b0ff9601ef37977d2569a65",
+  "format": 1
+ },
+ "format": 1
+}

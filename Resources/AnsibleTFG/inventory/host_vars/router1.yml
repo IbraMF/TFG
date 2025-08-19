@@ -1,0 +1,9 @@
+# ROUTER CONNECTION
+ansible_host: 10.0.0.1
+http_port: 8000
+api_key: "xd4D4UCUj7jV3HrW5OF34VdNtBBTdzwgMz+K6Oqv8MjIyfDZEHPGajQI2/2FTiV9QsXBTO61Wxk2j+eC"
+api_secret: "26TmsIklj/S41pQCMP+/WwCB52mfDy0szgb2AsDLd23U1u5tMtO2rS4hI8zI5kdgXNEUVItuKk6kYUX3"
+
+# Wireguard VPN
+wg_private_key: "TgoMlAO6WY0sQH/341nA99z2OC2yYNcOvYZwEkv0rSY="
+

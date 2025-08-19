@@ -1,0 +1,920 @@
+---
+
+- name: Cleaning up firewall config
+  hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ lookup('ansible.builtin.env', 'TEST_FIREWALL') }}"
+      api_credential_file: "{{ lookup('ansible.builtin.env', 'TEST_API_KEY') }}"
+      ssl_verify: false
+
+  tasks:
+    - name: Cleanup Rules
+      ansibleguy.opnsense.rule_purge:
+        force_all: true
+        match_fields: ['description']
+        key_field: 'description'
+
+    - name: Cleanup Aliases
+      ansibleguy.opnsense.alias_purge:
+        force_all: true
+
+    - name: Cleanup packages
+      ansibleguy.opnsense.package:
+        name: ['os-hw-probe', 'os-dmidecode']
+        action: "{{ item }}"
+        timeout: 60
+      diff: false
+      loop:
+        - 'unlock'
+        - 'remove'
+
+    - name: Cleanup cron jobs
+      ansibleguy.opnsense.cron:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1'
+        - 'ANSIBLE_TEST_2'
+
+    - name: Cleanup routes
+      ansibleguy.opnsense.route:
+        description: "{{ item }}"
+        network: '192.168.0.0/32'
+        gateway: 'LAN_GW'
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1'
+        - 'ANSIBLE_TEST_2'
+
+    - name: Cleanup Unbound General
+      ansibleguy.opnsense.unbound_general:
+        reload: false  # speed
+
+    - name: Cleanup Unbound DNS ACLs
+      ansibleguy.opnsense.unbound_acl:
+        name: "{{ item }}"
+        state: 'absent'
+        reload: false  # speed
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup Unbound DNS-over-TLS
+      ansibleguy.opnsense.unbound_dot:
+        target: "{{ item }}"
+        state: 'absent'
+        reload: false  # speed
+      loop:
+        - '1.1.1.1'
+        - '1.1.1.2'
+        - '1.1.1.3'
+        - '1.1.1.4'
+
+    - name: Cleanup Unbound DNS-Forwarding's
+      ansibleguy.opnsense.unbound_forward:
+        domain: "{{ item.d }}"
+        target: "{{ item.t }}"
+        state: 'absent'
+        reload: false  # speed
+      loop:
+        - {d: 'fwd.opnsense.test.ansibleguy.net', t: '1.1.1.1'}
+        - {d: 'fwd.opnsense.test.ansibleguy.net', t: '1.1.1.2'}
+        - {d: '', t: '1.1.1.3'}
+        - {d: '', t: '1.1.1.4'}
+
+    - name: Cleanup Unbound DNS host-override aliases
+      ansibleguy.opnsense.unbound_host_alias:
+        description: "{{ item }}"
+        alias: 'dummy'
+        domain: 'dummy'
+        state: 'absent'
+        match_fields: ['description']
+        reload: false  # speed
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup Unbound DNS host-overrides
+      ansibleguy.opnsense.unbound_host:
+        description: "{{ item }}"
+        hostname: 'dummy'
+        domain: 'dummy'
+        state: 'absent'
+        match_fields: ['description']
+        reload: false  # speed
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup syslog
+      ansibleguy.opnsense.syslog:
+        description: "{{ item }}"
+        target: '192.168.0.1'
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1'
+        - 'ANSIBLE_TEST_2'
+        - 'ANSIBLE_TEST_3'
+
+    - name: Cleanup ipsec certs
+      ansibleguy.opnsense.ipsec_cert:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup shaper pipes
+      ansibleguy.opnsense.shaper_pipe:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup shaper queues
+      ansibleguy.opnsense.shaper_queue:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup shaper rules
+      ansibleguy.opnsense.shaper_rule:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup monit services
+      ansibleguy.opnsense.monit_service:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+
+    - name: Cleanup monit alerts
+      ansibleguy.opnsense.monit_alert:
+        recipient: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'alert@monit.opnsense.test.ansibleguy.net'
+        - 'alert2@monit.opnsense.test.ansibleguy.net'
+
+    - name: Cleanup monit tests
+      ansibleguy.opnsense.monit_test:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup wireguard servers
+      ansibleguy.opnsense.wireguard_server:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup wireguard peers
+      ansibleguy.opnsense.wireguard_peer:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup wireguard general
+      ansibleguy.opnsense.wireguard_general:
+        enabled: false
+
+    - name: Cleanup VIPs
+      ansibleguy.opnsense.interface_vip:
+        interface: "{{ item.int }}"
+        address: "{{ item.ip }}"
+        state: 'absent'
+      loop:
+        - {int: 'lan', ip: '192.168.1.1/30'}
+        - {int: 'opt1', ip: '192.168.2.1/24'}
+        - {int: 'opt1', ip: '2001:db8::1/128'}
+
+    - name: Cleanup vlan interfaces
+      ansibleguy.opnsense.interface_vlan:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup vxlan interfaces
+      ansibleguy.opnsense.interface_vxlan:
+        id: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 100
+        - 101
+
+    - name: Cleanup lagg interfaces
+      ansibleguy.opnsense.interface_lagg:
+        device: 'lagg0'
+        state: 'absent'
+
+    - name: Cleanup GRE interfaces
+      ansibleguy.opnsense.interface_gre:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup source-nat
+      ansibleguy.opnsense.source_nat:
+        description: "{{ item }}"
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup on-to-one nat
+      ansibleguy.opnsense.one_to_one:
+        description: "{{ item }}"
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup FRR general settings
+      ansibleguy.opnsense.frr_general:
+        enabled: false
+        profile: 'traditional'
+        carp: false
+        snmp_agentx: false
+        log: true
+        log_level: 'notifications'
+
+    - name: Cleanup FRR BFD general settings
+      ansibleguy.opnsense.frr_bfd_general:
+        enabled: false
+
+    - name: Cleanup FRR BFD neighbors
+      ansibleguy.opnsense.frr_bfd_neighbor:
+        ip: "{{ item }}"
+        state: 'absent'
+      loop:
+        - '10.0.0.1'
+        - '10.0.0.0/28'
+
+    - name: Cleanup FRR BGP general settings
+      ansibleguy.opnsense.frr_bgp_general:
+        as_number: 1337
+        enabled: false
+
+    - name: Cleanup FRR BGP neighbors
+      ansibleguy.opnsense.frr_bgp_neighbor:
+        description: "{{ item }}"
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_2_2'
+
+    - name: Cleanup FRR BGP route-maps
+      ansibleguy.opnsense.frr_bgp_route_map:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_2_2'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup FRR BGP prefix lists
+      ansibleguy.opnsense.frr_bgp_prefix_list:
+        name: "{{ item.n }}"
+        seq: "{{ item.s | default(omit) }}"
+        state: 'absent'
+      loop:
+        - {'n': 'ANSIBLE_TEST_1_1', 's': 55}
+        - {'n': 'ANSIBLE_TEST_1_2', 's': 56}
+        - {'n': 'ANSIBLE_TEST_1_2', 's': 57}
+        - {'n': 'ANSIBLE_TEST_2_1', 's': 50}
+        - {'n': 'ANSIBLE_TEST_2_1', 's': 51}
+        - {'n': 'ANSIBLE_TEST_3_1', 's': 50}
+        - {'n': 'ANSIBLE_TEST_3_1', 's': 51}
+
+    - name: Cleanup FRR BGP community lists
+      ansibleguy.opnsense.frr_bgp_community_list:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup FRR BGP as paths
+      ansibleguy.opnsense.frr_bgp_as_path:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup FRR BGP redistributions
+      ansibleguy.opnsense.frr_bgp_redistribution:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup FRR BGP Peer Groups
+      ansibleguy.opnsense.frr_bgp_peer_group:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup OSPF general settings
+      ansibleguy.opnsense.frr_ospf_general:
+        enabled: false
+
+    - name: Cleanup OSPFv3 general settings
+      ansibleguy.opnsense.frr_ospf3_general:
+        enabled: false
+
+    - name: Cleanup OSPFv3 interfaces
+      ansibleguy.opnsense.frr_ospf3_interface:
+        interface: "{{ item }}"
+        state: 'absent'
+        match_fields: ['interface']
+      loop:
+        - 'opt1'
+        - 'lan'
+
+    - name: Cleanup OSPF route-maps
+      ansibleguy.opnsense.frr_ospf_route_map:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup OSPFv3 route-maps
+      ansibleguy.opnsense.frr_ospf3_route_map:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup OSPF networks
+      ansibleguy.opnsense.frr_ospf_network:
+        ip: "{{ item.ip }}"
+        mask: "{{ item.mask }}"
+        state: 'absent'
+        match_fields: ['ip', 'mask']
+      loop:
+        - {'ip': '10.0.1.0', 'mask': 30}
+        - {'ip': '10.0.2.0', 'mask': 24}
+        - {'ip': '10.0.3.0', 'mask': 24}
+
+    - name: Cleanup OSPFv3 networks
+      ansibleguy.opnsense.frr_ospf3_network:
+        ip: "{{ item.ip }}"
+        mask: "{{ item.mask }}"
+        state: 'absent'
+        match_fields: ['ip', 'mask']
+      loop:
+        - {'ip': '2001:db8:1::', 'mask': 64}
+        - {'ip': '2001:db8::', 'mask': 64}
+
+    - name: Cleanup OSPF prefix-lists
+      ansibleguy.opnsense.frr_ospf_prefix_list:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup OSPFv3 prefix-lists
+      ansibleguy.opnsense.frr_ospf3_prefix_list:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup FRR OSPF redistributions
+      ansibleguy.opnsense.frr_ospf_redistribution:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup FRR OSPFv4 redistributions
+      ansibleguy.opnsense.frr_ospf3_redistribution:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup BIND general settings
+      ansibleguy.opnsense.bind_general:
+        enabled: false
+
+    - name: Cleanup BIND blocklist settings
+      ansibleguy.opnsense.bind_blocklist:
+        enabled: false
+
+    - name: Cleanup BIND Records
+      ansibleguy.opnsense.bind_record_multi:
+        records:
+          'test4.ansibleguy':
+            - 'test1'
+            - name: 'test1'
+              type: 'TXT'
+            - 'test2'
+            - name: 'test2'
+              type: 'TXT'
+            - 'test3'
+            - name: 'test4'
+              type: 'CNAME'
+        state: 'absent'
+      register: bind_cleanup1
+      failed_when:
+        - bind_cleanup1.failed
+        - "'does not seem to exist' not in bind_cleanup1.msg"
+
+    - name: Cleanup BIND Domains
+      ansibleguy.opnsense.bind_domain:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'test1.ansibleguy'
+        - 'test2.ansibleguy'
+        - 'test3.ansibleguy'
+        - 'test4.ansibleguy'
+
+    - name: Cleanup BIND ACLs
+      ansibleguy.opnsense.bind_acl:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_2_2'
+        - 'ANSIBLE_TEST_3_1'
+        - 'ANSIBLE_TEST_3_2'
+      when: not ansible_check_mode
+
+    - name: Cleanup WebProxy General
+      ansibleguy.opnsense.webproxy_general:
+        enabled: false
+
+    - name: Cleanup WebProxy Cache
+      ansibleguy.opnsense.webproxy_cache:
+
+    - name: Cleanup WebProxy Parent
+      ansibleguy.opnsense.webproxy_parent:
+        enabled: false
+
+    - name: Cleanup WebProxy Traffic
+      ansibleguy.opnsense.webproxy_traffic:
+        enabled: false
+
+    - name: Cleanup WebProxy Forward
+      ansibleguy.opnsense.webproxy_forward:
+
+    - name: Cleanup WebProxy ACL
+      ansibleguy.opnsense.webproxy_acl:
+
+    - name: Cleanup WebProxy ICAP
+      ansibleguy.opnsense.webproxy_icap:
+        enabled: false
+
+    - name: Cleanup WebProxy Auth
+      ansibleguy.opnsense.webproxy_auth:
+
+    - name: Cleanup WebProxy Remote-ACLs
+      ansibleguy.opnsense.webproxy_remote_acl:
+        file: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLETEST1'
+        - 'ANSIBLETEST2'
+
+    - name: Cleanup WebProxy PAC-Rule
+      ansibleguy.opnsense.webproxy_pac_rule:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup WebProxy PAC-Proxy
+      ansibleguy.opnsense.webproxy_pac_proxy:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup WebProxy PAC-Match
+      ansibleguy.opnsense.webproxy_pac_match:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup IPSec PSK
+      ansibleguy.opnsense.ipsec_psk:
+        identity: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE@TEST1'
+        - 'ANSIBLE@TEST2'
+        - 'ANSIBLE@TEST2X'
+
+    - name: Cleanup IPSec childs
+      ansibleguy.opnsense.ipsec_child:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup IPSec connections
+      ansibleguy.opnsense.ipsec_connection:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+        - 'ANSIBLE_TEST_4_1'
+        - 'ANSIBLE_TEST_5_1'
+
+    - name: Cleanup IPSec pools
+      ansibleguy.opnsense.ipsec_pool:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_2_2'
+
+    - name: Cleanup IPSec VTIs
+      ansibleguy.opnsense.ipsec_vti:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup IPSec Local-Auth
+      ansibleguy.opnsense.ipsec_auth_local:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup IPSec Remote-Auth
+      ansibleguy.opnsense.ipsec_auth_remote:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup IDS General
+      ansibleguy.opnsense.ids_general:
+        interfaces: ['opt1']
+        enabled: false
+
+    - name: Cleanup IDS Ruleset
+      ansibleguy.opnsense.ids_ruleset:
+        name: 'ET open/compromised'
+        enabled: false
+
+    - name: Cleanup IDS Rule
+      ansibleguy.opnsense.ids_rule:
+        sid: 2400000
+
+    - name: Cleanup IDS User-Rule
+      ansibleguy.opnsense.ids_user_rule:
+        name: 'ANSIBLE_TEST_1_1'
+        state: 'absent'
+
+    - name: Cleanup IDS Policy
+      ansibleguy.opnsense.ids_policy:
+        description: 'ANSIBLE_TEST_1_1'
+        state: absent
+
+    - name: Cleanup IDS Policy-Rule
+      ansibleguy.opnsense.ids_policy_rule:
+        sid: 2400000
+        state: absent
+
+    - name: Cleanup OpenVPN Client
+      ansibleguy.opnsense.openvpn_client:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup Client-Overwrite
+      ansibleguy.opnsense.openvpn_client_override:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup OpenVPN Server
+      ansibleguy.opnsense.openvpn_server:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup OpenVPN Static-Keys
+      ansibleguy.opnsense.openvpn_static_key:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup Nginx General
+      ansibleguy.opnsense.nginx_general:
+        enabled: false
+
+    - name: Cleanup Nginx Upstream-Server
+      ansibleguy.opnsense.nginx_upstream_server:
+        name: 'ANSIBLE@TEST1'
+        state: 'absent'
+
+    - name: Cleanup Gateways
+      ansibleguy.opnsense.gateway:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1'
+        - 'ANSIBLE_TEST_2'
+
+    - name: Cleanup Interface groups
+      ansibleguy.opnsense.rule_interface_group:
+        name: 'ANSIBLE_TEST'
+        state: 'absent'
+
+    - name: Cleanup dhcrelay
+      ansibleguy.opnsense.dhcrelay_relay:
+        interface: '{{ if_dhcrelay }}'
+        state: 'absent'
+      vars:
+        if_dhcrelay: "{{ lookup('ansible.builtin.env', 'TEST_DHCRELAY_IF') | default('lan', true) }}"
+
+    - name: Cleanup dhcrelay-destination
+      ansibleguy.opnsense.dhcrelay_destination:
+        name: 'ANSIBLE_TEST_1_1'
+        state: 'absent'
+
+    - name: Cleanup DHCP-reservations
+      ansibleguy.opnsense.dhcp_reservation:
+        ip: "{{ item }}"
+        state: 'absent'
+      loop:
+        - '192.168.69.76'
+        - '192.168.69.86'
+
+    - name: Cleanup DHCP-Controlagent
+      ansibleguy.opnsense.dhcp_controlagent:
+        enabled: false
+        http_host: '127.0.0.1'
+        http_port: 8000
+
+    - name: Cleanup DHCP Settings
+      ansibleguy.opnsense.dhcp_general:
+        enabled: false
+
+    - name: Cleanup DHCP Subnets
+      ansibleguy.opnsense.dhcp_subnet:
+        subnet: "{{ item }}"
+        state: 'absent'
+      loop:
+        - '192.168.69.0/24'
+        - '192.168.88.0/24'
+        - '192.168.89.0/24'
+
+    - name: Cleanup ACME Certificates
+      ansibleguy.opnsense.acme_certificate:
+        description: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+
+    - name: Cleanup ACME General
+      ansibleguy.opnsense.acme_general:
+        enabled: false
+
+    - name: Cleanup ACME Account
+      ansibleguy.opnsense.acme_account:
+        name: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_DUMMY_1_1'
+
+    - name: Cleanup ACME Action
+      ansibleguy.opnsense.acme_action:
+        name: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_1_5'
+        - 'ANSIBLE_TEST_1_6'
+        - 'ANSIBLE_TEST_1_7'
+        - 'ANSIBLE_TEST_1_8'
+        - 'ANSIBLE_TEST_1_9'
+        - 'ANSIBLE_TEST_1_10'
+        - 'ANSIBLE_TEST_DUMMY_1_1'
+
+    - name: Cleanup ACME Validation
+      ansibleguy.opnsense.acme_validation:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_1_5'
+        - 'ANSIBLE_TEST_1_6'
+        - 'ANSIBLE_TEST_1_7'
+        - 'ANSIBLE_TEST_1_8'
+        - 'ANSIBLE_TEST_1_9'
+        - 'ANSIBLE_TEST_1_10'
+        - 'ANSIBLE_TEST_DUMMY_1_1'
+
+    - name: Cleanup Postfix General
+      ansibleguy.opnsense.postfix_general:
+        enabled: false
+
+    - name: Cleanup Postfix Address
+      ansibleguy.opnsense.postfix_address:
+        address: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Domain
+      ansibleguy.opnsense.postfix_domain:
+        domainname: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'example.com'
+        - 'example.net'
+
+    - name: Cleanup Postfix Headercheck
+      ansibleguy.opnsense.postfix_headercheck:
+        expression: '/^\s*User-Agent/ IGNORE'
+        filter: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'WHILE_RECEIVING'
+        - 'WHILE_DELIVERING'
+
+    - name: Cleanup Postfix Recipient
+      ansibleguy.opnsense.postfix_recipient:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Recipient BCC
+      ansibleguy.opnsense.postfix_recipientbcc:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Sender
+      ansibleguy.opnsense.postfix_sender:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Sender BCC
+      ansibleguy.opnsense.postfix_senderbcc:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Sender Canonical
+      ansibleguy.opnsense.postfix_sendercanonical:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup IPSec Manual SPD
+      ansibleguy.opnsense.ipsec_manual_spd:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup HASync
+      ansibleguy.opnsense.hasync_general:
+
+    - name: Cleanup Snapshots
+      ansibleguy.opnsense.snapshot:
+        name: 'default'
+        activate: true
+      register: cl_snap1
+      failed_when:
+        - cl_snap1.failed
+        - "'Unsupported' not in cl_snap1.msg | default('')"
+
+    - name: Cleanup Snapshots
+      ansibleguy.opnsense.snapshot:
+        name: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+      register: cl_snap2
+      failed_when:
+        - cl_snap2.failed
+        - "'Unsupported' not in cl_snap2.msg | default('')"

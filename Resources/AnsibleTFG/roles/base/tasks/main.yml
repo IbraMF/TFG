@@ -1,0 +1,46 @@
+- name: Set hostname
+  cisco.ios.ios_hostname:
+    config:
+      hostname: "{{ inventory_hostname }}"
+
+- name: Shutdown all unused interfaces and assign UNUSED_VLAN
+  cisco.ios.ios_config:
+    lines:
+      - "vlan 999"
+      - "name UNUSED_VLAN"
+      - "interface range {{ unused_ports }}"
+      - "switchport access vlan 999"
+      - "shutdown"
+
+- name: Setting access ports
+  cisco.ios.ios_l2_interfaces:
+    config:
+      - name: "{{ item.interface }}"
+        mode: "{{ item.mode }}"
+        access:
+          vlan: "{{ item.vlan }}"
+  loop: "{{ access_ports }}"
+  when: access_ports is defined
+
+- name: Set encapsulation for trunk ports
+  cisco.ios.ios_l2_interfaces:
+    config:
+      - name: "{{ item.interface }}"
+        trunk:
+          encapsulation: "{{ item.encapsulation }}"
+  loop: "{{ trunk_ports }}"
+
+- name: Setting trunk  ports
+  cisco.ios.ios_l2_interfaces:
+    config:
+      - name: "{{ item.interface }}"
+        trunk:
+          allowed_vlans: "{{ item.allowed_vlans }}"
+          encapsulation: "{{ item.encapsulation }}"
+          native_vlan: "{{ item.native_vlan }}"
+        mode: "{{ item.mode }}"
+
+    state: replaced
+  loop: "{{ trunk_ports }}"
+  when: trunk_ports is defined
+

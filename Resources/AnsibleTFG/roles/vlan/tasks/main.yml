@@ -1,0 +1,25 @@
+- name: Create VLANs Layer 2
+  cisco.ios.ios_vlans:
+    config:
+      - vlan_id: "{{ item.id }}"
+        name: "{{ item.name }}"
+        shutdown: disabled
+  loop: "{{ vlans }}"
+  when: vlans is defined
+
+- name: Crear SVIs for VLAN Layer 3
+  cisco.ios.ios_l3_interfaces:
+    config:
+      - name: "{{ item.name }}"
+        ipv4:
+          - address: "{{ item.address }}/{{ item.mask }}"
+  loop: "{{ svis }}"
+  when: svis is defined
+
+- name: No shutdown
+  cisco.ios.ios_config:
+    lines:
+      - "interface {{ item.name }}"
+      - "no shutdown"
+  loop: "{{ svis }}"
+  when: svis is defined

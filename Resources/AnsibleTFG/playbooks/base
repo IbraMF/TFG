@@ -1,0 +1,5 @@
+- name: Base configuration
+  hosts: l2switches:l3switches
+  gather_facts: no
+  roles:
+    - base
